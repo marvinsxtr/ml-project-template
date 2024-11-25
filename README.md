@@ -93,12 +93,6 @@ docker buildx build -t ml-project-template .
 
 When using VSCode, the Docker image is automatically built when using a Dev Container.
 
-In order to update the dependencies of the image, install them inside the container and run
-
-```bash
-micromamba env export > environment.yaml
-```
-
 ## Acknowledgements
 
 This template is based on a [previous example project](https://github.com/mx-e/example_project_ml_cluster).
