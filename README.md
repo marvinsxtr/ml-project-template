@@ -6,7 +6,7 @@ This is a template project for ML experimentation using wandb, hydra-zen, submit
 
 ## Highlights
 
-* Single Conda environment in Docker via [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)
+* Python environment in Docker via [uv](https://docs.astral.sh/uv/)
 * Logging and visualizations via [Weights and Biases](https://wandb.com)
 * Reproducibility and modular type-checked configs via [hydra-zen](https://github.com/mit-ll-responsible-ai/hydra-zen)
 * Submit Slurm jobs and sweeps directly from Python via [submitit](https://github.com/facebookincubator/submitit)

@@ -1,9 +1,24 @@
 [project]
 name = "ml-project-template"
 version = "0.0.1"
-description = "ML Project Template"
-requires-python = "==3.12"
-readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = "~=3.12"
+dependencies = [
+  "torch>=2.5.1",
+  "wandb>=0.18.5",
+  "hydra-zen>=0.13.0",
+  "submitit>=1.5.1",
+  "python-dotenv>=1.0.1",
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu124", marker = "platform_system != 'Darwin'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
 
 [tool.mypy]
 explicit_package_bases = true
@@ -74,7 +89,6 @@ ignore = [
     "D213",
     "N806",
     "N803",
-    "TCH001",
     "E712",
     "PLR0913"
 ]
