@@ -23,6 +23,11 @@ class Job:
     cluster: str
     kwargs: dict
 
+    def __post_init__(self) -> None:
+        """Run the job and exit."""
+        self.run()
+        sys.exit(0)
+
     def filter_args(self, args: list[str]) -> list[str]:
         """Filter args to prevent recursive jobs on the cluster."""
         return [arg for arg in args if f"{ConfigKeys.CONFIG}/{ConfigKeys.JOB}" not in arg]

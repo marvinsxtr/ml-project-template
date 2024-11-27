@@ -2,11 +2,11 @@ import os
 from dataclasses import dataclass, fields
 from typing import Self
 
-from dotenv import load_dotenv
-
 import wandb
-from src.common.logging.logger import logger
+from dotenv import load_dotenv
 from wandb.wandb_run import Run
+
+from src.common.logging.logger import logger
 
 
 @dataclass

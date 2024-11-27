@@ -1,14 +1,15 @@
-from hydra_zen import store
+from hydra_zen import builds, store
 
-from src.configs.logging.wandb import BaseWandBConfig
-from src.configs.runs.base import BaseJobConfig, BaseRunConfig, BaseSweepConfig
+from src.configs.logging.wandb import WandBConfig
+from src.configs.runs.base import JobConfig, RunConfig, SweepConfig
+from src.runs.main import main
 
-run_config_store = store(group="cfg", hydra_defaults=["_self_", {"wandb": None}, {"job": None}])
-run_config_store(BaseRunConfig, name="base")
+main_config = builds(main, cfg=RunConfig, populate_full_signature=True)
+store(main_config, name="root", hydra_defaults=["_self_", {"cfg/wandb": None}, {"cfg/job": None}])
 
-wandb_config_store = store(group="cfg/wandb")
-wandb_config_store(BaseWandBConfig, name="base")
+wandb_store = store(group="cfg/wandb")
+wandb_store(WandBConfig, name="base")
 
-job_config_store = store(group="cfg/job")
-job_config_store(BaseJobConfig, name="base")
-job_config_store(BaseSweepConfig, name="sweep")
+job_store = store(group="cfg/job")
+job_store(JobConfig, name="base")
+job_store(SweepConfig, name="sweep")

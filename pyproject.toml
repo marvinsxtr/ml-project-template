@@ -8,6 +8,12 @@ dependencies = [
   "hydra-zen>=0.13.0",
   "submitit>=1.5.1",
   "python-dotenv>=1.0.1",
+  "numpy>=2.1.3",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.0",
 ]
 
 [tool.uv.sources]
@@ -32,12 +38,12 @@ follow_imports = "skip"
 [tool.ruff]
 line-length = 119
 indent-width = 4
+
+[tool.ruff.lint]
 select = ["ALL"]
 ignore = [
     "ANN002",
     "ANN003",
-    "ANN101",
-    "ANN102",
     "ANN401",
     "D413",
     "COM812",
@@ -90,10 +96,11 @@ ignore = [
     "N806",
     "N803",
     "E712",
-    "PLR0913"
+    "PLR0913",
+    "TC001"
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "**/tests/**/*.py" = [
     "S101",
     "ARG",
