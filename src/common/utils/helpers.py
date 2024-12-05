@@ -24,6 +24,11 @@ def get_device() -> str:
 
     Returns
     -------
-    The GPU device if CUDA is available and the CPU device as a fallback.
+    The GPU or the MPS device when available and the CPU device as a fallback.
     """
-    return "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.cuda.is_available():
+        return "cuda"
+    elif torch.backends.mps.is_available():
+        return "mps"
+    else:
+        return "cpu"

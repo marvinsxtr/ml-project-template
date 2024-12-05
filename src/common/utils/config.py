@@ -4,6 +4,7 @@ from functools import partial
 
 import wandb
 from hydra_zen import instantiate, store, to_yaml, zen
+from hydra_zen.third_party.pydantic import pydantic_parser
 from omegaconf import DictConfig, OmegaConf
 
 from src.common.logging.logger import get_hydra_output_dir, logger
@@ -63,6 +64,7 @@ def run(main_function: Callable, log_debug: bool = True) -> None:
         main_function,
         pre_call=partial(pre_call, log_debug=log_debug),
         resolve_pre_call=False,
+        instantiation_wrapper=pydantic_parser,
     ).hydra_main(
         config_name="root",
         config_path=None,

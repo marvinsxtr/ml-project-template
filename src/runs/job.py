@@ -1,7 +1,8 @@
+import math
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any, Literal
 
@@ -15,16 +16,47 @@ from src.common.utils.constants import ConfigKeys
 
 
 @dataclass
+class SlurmParams:
+    """Slurm resource configuration."""
+
+    partition: str | None = None
+    cpus_per_task: int | None = None
+    gpus_per_task: int | None = None
+    mem_gb: int | None = None
+    excluded_nodes: list[str] = field(default_factory=list)
+    constraint: str | None = None
+    time_hours: int | None = None
+    nodes: int | None = None
+    tasks_per_node: int | None = None
+    tmp: str | None = None
+
+    def to_submitit_params(self) -> dict[str, Any]:
+        """Convert to submitit parameters."""
+        params: dict[str, Any] = {}
+        for param in fields(self):
+            if (value := getattr(self, param.name)) is not None:
+                match param.name:
+                    case "excluded_nodes":
+                        params["slurm_exclude"] = ",".join(value)
+                    case "time_hours":
+                        params["slurm_time"] = f"{value}:00:00"
+                    case _:
+                        params[f"slurm_{param.name}"] = value
+        return params
+
+
+@dataclass
 class Job:
     """Job to run code on a cluster using apptainer."""
 
-    image: str
-    partition: str
-    cluster: str
-    kwargs: dict
+    image: str = "docker://ghcr.io/marvinsxtr/ml-project-template:main"
+    cluster: str = "slurm"
+    slurm_params: SlurmParams = field(default_factory=SlurmParams)
+    wait_for_job: bool = False
+    timeout_min: int = 5
 
     def __post_init__(self) -> None:
-        """Run the job and exit."""
+        """Run the job."""
         self.run()
         sys.exit(0)
 
@@ -47,18 +79,22 @@ class Job:
             cluster=self.cluster,
             slurm_python=self.python_command,
         )
-        executor.update_parameters(**self.kwargs)
+
+        executor.update_parameters(timeout_min=self.timeout_min, **self.slurm_params.to_submitit_params())
         job = executor.submit(function)
 
         logger.info(f"Submitted job {job.job_id}")
+
+        if self.wait_for_job:
+            logger.info(f"\n{job.result()}")
 
 
 @dataclass
 class SweepJob(Job):
     """Job to run a sweep on a cluster."""
 
-    num_workers: int
-    parameters: dict[str, list[Any]]
+    num_workers: int = 1
+    parameters: dict[str, list[Any]] = field(default_factory=dict)
     metric_name: str = "loss"
     metric_goal: Literal["maximize", "minimize"] = "minimize"
 
@@ -112,9 +148,11 @@ class SweepJob(Job):
         )
         executor.update_parameters(
             slurm_array_parallelism=self.num_workers,
-            **self.kwargs,
+            **self.slurm_params.to_submitit_params(),
         )
-        jobs = executor.map_array(function, [sweep_id] * self.num_workers)
+
+        num_jobs = math.prod([len(v) for v in self.parameters.values()])
+        jobs = executor.map_array(function, [sweep_id] * num_jobs)
 
         for job in jobs:
             logger.info(f"Submitted job {job.job_id}")
