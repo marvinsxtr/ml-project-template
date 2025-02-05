@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS linux-base
+FROM --platform=linux/amd64 nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS linux-base
 
 # Environment variables
 ENV UV_PROJECT_ENVIRONMENT="/venv"
@@ -14,13 +14,6 @@ RUN rm -f /etc/apt/sources.list.d/*.list
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y --no-install-recommends build-essential \
     sudo curl git htop less rsync screen vim nano wget
-
-# Google Cloud SDK
-RUN curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-418.0.0-linux-x86_64.tar.gz > /tmp/google-cloud-sdk.tar.gz
-RUN mkdir -p /usr/local/gcloud \
-    && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
-    && /usr/local/gcloud/google-cloud-sdk/install.sh
-ENV PATH=$PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
 # Slurm
 RUN groupadd -g 12067 slurm
