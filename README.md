@@ -46,7 +46,7 @@ WANDB_PROJECT=
 You can run a script locally via
 
 ```bash
-python src/runs/main.py
+python src/ml_project_template/runs/main.py
 ```
 
 Hydra should automatically generate a `config.yaml` in the `outputs/<date>/<time>/.hydra` folder which you can use to reproduce the same run later. Using the command line arguments, you can override or switch out parts of this config as you will see in the following sections.
@@ -54,13 +54,13 @@ Hydra should automatically generate a `config.yaml` in the `outputs/<date>/<time
 To log to WandB, add `cfg/wandb=base`:
 
 ```bash
-python src/runs/main.py cfg/wandb=base
+python src/ml_project_template/runs/main.py cfg/wandb=base
 ```
 
 In order to use WandB in offline mode, add `cfg.wandb.mode=offline`:
 
 ```bash
-python src/runs/main.py cfg/wandb=base cfg.wandb.mode=offline
+python src/ml_project_template/runs/main.py cfg/wandb=base cfg.wandb.mode=offline
 ```
 
 ### Single Job
@@ -68,20 +68,20 @@ python src/runs/main.py cfg/wandb=base cfg.wandb.mode=offline
 To run the command as a job in the cluster, run
 
 ```bash
-python src/runs/main.py cfg/job=base
+python src/ml_project_template/runs/main.py cfg/job=base
 ```
 
-This will automatically add WandB logging for you. See `src/configs/runs/base.py` to configure the job to your needs.
+This will automatically add WandB logging for you. See `src/ml_project_template/configs/runs/base.py` to configure the job to your needs.
 
 ### Distributed Sweep
 
 Run a sweep over two seeds using multiple nodes:
 
 ```bash
-python src/runs/main.py cfg/job=sweep
+python src/ml_project_template/runs/main.py cfg/job=sweep
 ```
 
-This will automatically add WandB logging for you. See `src/configs/runs/base.py` to configure the sweep to your needs.
+This will automatically add WandB logging for you. See `src/ml_project_template/configs/runs/base.py` to configure the sweep to your needs.
 
 ## Docker Image
 

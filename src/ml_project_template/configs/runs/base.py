@@ -1,7 +1,7 @@
 from hydra_zen import builds
 
-from src.runs.job import Job, SlurmParams, SweepJob
-from src.runs.run import Run
+from ml_project_template.runs.job import Job, SlurmParams, SweepJob
+from ml_project_template.runs.run import Run
 
 RunConfig = builds(Run, seed=42, wandb=None, job=None)
 

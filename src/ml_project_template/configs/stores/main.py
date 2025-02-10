@@ -1,8 +1,8 @@
 from hydra_zen import builds, store
 
-from src.configs.logging.wandb import WandBConfig
-from src.configs.runs.base import JobConfig, RunConfig, SweepConfig
-from src.runs.main import main
+from ml_project_template.configs.logging.wandb import WandBConfig
+from ml_project_template.configs.runs.base import JobConfig, RunConfig, SweepConfig
+from ml_project_template.runs.main import main
 
 main_config = builds(main, cfg=RunConfig, populate_full_signature=True)
 store(main_config, name="root", hydra_defaults=["_self_", {"cfg/wandb": None}, {"cfg/job": None}])

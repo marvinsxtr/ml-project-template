@@ -10,9 +10,9 @@ import yaml
 from submitit import AutoExecutor
 from submitit.helpers import CommandFunction
 
-from src.common.logging.logger import get_hydra_output_dir, logger
-from src.common.logging.wandb import WandBConfig
-from src.common.utils.constants import ConfigKeys
+from ml_project_template.common.logging.logger import get_hydra_output_dir, logger
+from ml_project_template.common.logging.wandb import WandBConfig
+from ml_project_template.common.utils.constants import ConfigKeys
 
 
 @dataclass

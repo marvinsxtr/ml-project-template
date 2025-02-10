@@ -1,6 +1,6 @@
-from src.common.logging.logger import logger
-from src.common.utils.config import run
-from src.runs.run import Run
+from ml_project_template.common.logging.logger import logger
+from ml_project_template.common.utils.config import run
+from ml_project_template.runs.run import Run
 
 
 def main(cfg: Run, foo: int = 42, bar: int = 3) -> None:
@@ -16,6 +16,6 @@ def main(cfg: Run, foo: int = 42, bar: int = 3) -> None:
 
 
 if __name__ == "__main__":
-    import src.configs.stores.main  # noqa: F401
+    import ml_project_template.configs.stores.main  # noqa: F401
 
     run(main)

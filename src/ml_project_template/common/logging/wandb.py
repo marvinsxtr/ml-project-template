@@ -6,7 +6,7 @@ import wandb
 from dotenv import load_dotenv
 from wandb.wandb_run import Run
 
-from src.common.logging.logger import logger
+from ml_project_template.common.logging.logger import logger
 
 
 @dataclass

@@ -7,10 +7,10 @@ from hydra_zen import instantiate, store, to_yaml, zen
 from hydra_zen.third_party.pydantic import pydantic_parser
 from omegaconf import DictConfig, OmegaConf
 
-from src.common.logging.logger import get_hydra_output_dir, logger
-from src.common.logging.wandb import WandBRun
-from src.common.utils.constants import ConfigKeys
-from src.common.utils.helpers import seed_everything
+from ml_project_template.common.logging.logger import get_hydra_output_dir, logger
+from ml_project_template.common.logging.wandb import WandBRun
+from ml_project_template.common.utils.constants import ConfigKeys
+from ml_project_template.common.utils.helpers import seed_everything
 
 
 def pre_call(root_config: DictConfig, log_debug: bool = False) -> None:

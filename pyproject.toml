@@ -23,8 +23,12 @@ dev = [
 ]
 
 [tool.setuptools]
-package-dir = {"" = "src"}
-packages = {find = {where = ["src"], include = ["*"], namespaces = true}}
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
+namespaces = true
 
 [tool.uv.sources]
 torch = [

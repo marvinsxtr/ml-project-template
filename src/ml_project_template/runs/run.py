@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from src.common.logging.wandb import WandBRun
-from src.runs.job import Job
+from ml_project_template.common.logging.wandb import WandBRun
+from ml_project_template.runs.job import Job
 
 
 @dataclass
