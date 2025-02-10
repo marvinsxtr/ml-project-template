@@ -269,9 +269,9 @@ wheels = [
 ]
 
 [[package]]
-name = "ml_project_template"
+name = "ml-project-template"
 version = "0.0.1"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "hydra-zen" },
     { name = "numpy" },
