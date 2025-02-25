@@ -29,6 +29,16 @@ apptainer shell docker://ghcr.io/marvinsxtr/ml-project-template:main
 
 Note: This may take a few minutes on the first run.
 
+You can replace `main` with a version tag, e.g. `latest`or `v0.0.1`.
+
+To use version tags for indexing Dockerimage versions use the follwing after commiting the Dockerimage:
+
+```bash
+git tag v0.0.1
+git push
+git push origin tag v0.0.1
+```
+
 ### WandB Logging
 
 Logging to WandB is optional for running local jobs but mandatory for jobs submitted to the cluster.
