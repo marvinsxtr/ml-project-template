@@ -21,6 +21,7 @@ RUN wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/
     tar -xf /tmp/vscode-server-cli.tar.gz -C /usr/local/bin && \
     rm /tmp/vscode-server-cli.tar.gz
 
+# Slurm
 RUN groupadd -g 12067 slurm
 RUN useradd  -m -d /tmp -u 13504 -g slurm -s /bin/false slurm
 RUN groupadd -g 119 munge
