@@ -77,7 +77,7 @@ Choose one of the following methods to set up your environment:
    apptainer run --nv --writable-tmpfs docker://ghcr.io/marvinsxtr/ml-project-template:main code tunnel
    ```
 
-   In VSCode press Shift + [Alt/Cmd] + P, type connect to tunnel, select GitHub and select your named node on the cluster. Your IDE is now connected to the cluster.
+   In VSCode press `Shift+Alt+P` (Windows/Linux) or `Shift+Cmd+P` (Mac), type connect to tunnel, select GitHub and select your named node on the cluster. Your IDE is now connected to the cluster.
 
    To open a shell in the container on the cluster:
    ```bash
