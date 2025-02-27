@@ -15,7 +15,12 @@ RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y --no-install-recommends build-essential \
     sudo curl git htop less rsync screen vim nano wget
 
-# Slurm
+# Download and install VS Code Server CLI
+RUN wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/latest/cli-linux-x64/stable" && \
+    mkdir -p /usr/local/bin && \
+    tar -xf /tmp/vscode-server-cli.tar.gz -C /usr/local/bin && \
+    rm /tmp/vscode-server-cli.tar.gz
+
 RUN groupadd -g 12067 slurm
 RUN useradd  -m -d /tmp -u 13504 -g slurm -s /bin/false slurm
 RUN groupadd -g 119 munge
