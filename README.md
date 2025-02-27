@@ -1,73 +1,207 @@
-# ML Project Template
+# 🚀 ML Project Template
 
-This is a template project for ML experimentation using wandb, hydra-zen, submitit on a Slurm cluster using Docker and Apptainer for containerization.
+A modern template for machine learning experimentation using **wandb**, **hydra-zen**, and **submitit** on a Slurm cluster with Docker/Apptainer containerization.
 
-**NOTE**: This template is optimized for the specific setup of the ML Group cluster but may be easily adapted to similar settings.
+> **Note**: This template is optimized for the ML Group cluster setup but can be easily adapted to similar environments.
 
-## Highlights
+<div align="center">
 
-* Python environment in Docker via [uv](https://docs.astral.sh/uv/)
-* Logging and visualizations via [Weights and Biases](https://wandb.com)
-* Reproducibility and modular type-checked configs via [hydra-zen](https://github.com/mit-ll-responsible-ai/hydra-zen)
-* Submit Slurm jobs and sweeps directly from Python via [submitit](https://github.com/facebookincubator/submitit)
-* No `.def` or `.sh` files needed for Apptainer/Slurm
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
+[![Docker](https://img.shields.io/badge/Docker-Container-blue.svg)](https://www.docker.com/)
+[![WandB](https://img.shields.io/badge/WandB-Logging-yellow.svg)](https://wandb.ai)
+[![Hydra Zen](https://img.shields.io/badge/Hydra%20Zen-Config-green.svg)](https://github.com/mit-ll-responsible-ai/hydra-zen)
+[![Submitit](https://img.shields.io/badge/Submitit-Jobs-orange.svg)](https://github.com/facebookincubator/submitit)
 
-## Setup
+</div>
 
-To be able to run Slurm from within Apptainer, you first have to add the following lines to your `.zshrc`/`.bashrc` file:
+## ✨ Key Features
+
+- 📦 Python environment in Docker via [uv](https://docs.astral.sh/uv/)
+- 📊 Logging and visualizations via [Weights and Biases](https://wandb.com)
+- 🧩 Reproducibility and modular type-checked configs via [hydra-zen](https://github.com/mit-ll-responsible-ai/hydra-zen)
+- 🖥️ Submit Slurm jobs and parameter sweeps directly from Python via [submitit](https://github.com/facebookincubator/submitit)
+- 🔄 No `.def` or `.sh` files needed for Apptainer/Slurm
+
+## 📋 Table of Contents
+
+- [Container Setup](#-container-setup)
+  - [Option 1: Apptainer](#option-1-apptainer)
+  - [Option 2: Docker](#option-2-docker)
+- [Package Management](#-package-management)
+- [Updating the Docker Image](#-updating-the-docker-image)
+- [Container Registry Authentication](#-container-registry-authentication)
+- [Development Notes](#-development-notes)
+- [Running Experiments](#-running-experiments)
+  - [WandB Logging](#wandb-logging)
+  - [Local Execution](#local-execution)
+  - [Single Job](#single-job)
+  - [Distributed Sweep](#distributed-sweep)
+- [Contributions](#-contributions)
+- [Acknowledgements](#-acknowledgements)
+
+## 🐳 Container Setup
+
+Choose one of the following methods to set up your environment:
+
+### Option 1: Apptainer
+
+1. **Configure environment bindings**
+
+   Add to your `.zshrc` or `.bashrc`:
+   
+   ```bash
+   export APPTAINER_BIND=/opt/slurm-23.2,/opt/slurm,/etc/slurm,/etc/munge,/var/log/munge,/var/run/munge,/lib/x86_64-linux-gnu
+   export APPTAINERENV_APPEND_PATH=/opt/slurm/bin:/opt/slurm/sbin
+   ```
+
+2. **Install VSCode Command Line Interface (Optional)**
+
+   This step is required if you plan to create a remote tunnel. First, install the [Remote Tunnels](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-server) extentsion in VSCode.
+
+3. **Connect to compute resources**
+
+   For CPU resources:
+   ```bash
+   srun --partition=cpu-2h --pty bash
+   ```
+   
+   For GPU resources:
+   ```bash
+   srun --partition=gpu-2h --gpus-per-task=1 --pty bash
+   ```
+
+4. **Launch container**
+
+   To open a tunnel to connect you local VSCode to the container on the cluster:
+   ```bash
+   apptainer run --nv --writable-tmpfs docker://ghcr.io/marvinsxtr/ml-project-template:main code tunnel
+   ```
+
+   To open a shell in the container on the cluster:
+   ```bash
+   apptainer run --nv --writable-tmpfs docker://ghcr.io/marvinsxtr/ml-project-template:main /bin/bash
+   ```
+
+   > 💡 This may take a few minutes on the first run as the container image is downloaded.
+
+### Option 2: Docker
+
+Run the container directly with:
 
 ```bash
-export APPTAINER_BIND=/opt/slurm-23.2,/opt/slurm,/etc/slurm,/etc/munge,/var/log/munge,/var/run/munge,/lib/x86_64-linux-gnu
-export APPTAINERENV_APPEND_PATH=/opt/slurm/bin:/opt/slurm/sbin
+docker run -it --rm --platform=linux/amd64 ghcr.io/marvinsxtr/ml-project-template:main /bin/bash
 ```
 
-You can then use the given `Dockerfile` to start a shell via 
+> 💡 You can specify a version tag (e.g., `v0.0.1`) instead of `main`. Available versions are listed at [GitHub Container Registry](https://github.com/marvinsxtr/ml-project-template/pkgs/container/ml-project-template).
+
+## 📦 Package Management
+
+This project uses [uv](https://docs.astral.sh/uv/) for Python dependency management.
+
+### Adding or Updating Dependencies
+
+Inside the container (e.g., [VSCode shell with Docker Container](https://code.visualstudio.com/docs/devcontainers/containers)):
 
 ```bash
-apptainer shell docker://ghcr.io/marvinsxtr/ml-project-template:main
+# Add a specific package
+uv add <package-name>
+
+# Update all dependencies from pyproject.toml or requirements.txt
+uv sync
 ```
 
-Note: This may take a few minutes on the first run.
+## 🔄 Updating the Docker Image
 
-You can replace `main` with a version tag, e.g. `latest`or `v0.0.1`.
+1. **Update dependencies** using `uv` as described above
 
-To use version tags for indexing Dockerimage versions use the follwing after commiting the Dockerimage:
+2. **Commit changes** to the repository:
+
+   Use tags for versioning:
+
+   ```bash
+   git add pyproject.toml uv.lock 
+   git commit -m "Updated dependencies"
+   git tag v0.0.1
+   git push && git push --tags
+   ```
+
+3. **Use the updated image**:
+
+   The GitHub Actions workflow automatically builds a new image when changes are pushed.
+
+   With Apptainer:
+   ```bash
+   apptainer run --nv --writable-tmpfs docker://ghcr.io/marvinsxtr/ml-project-template:v0.0.1 /bin/bash
+   ```
+
+   With Docker:
+   ```bash
+   docker run -it --rm --platform=linux/amd64 ghcr.io/marvinsxtr/ml-project-template:v0.0.1 /bin/bash
+   ```
+
+## 🔑 Container Registry Authentication
+
+### Generate Token
+
+1. Create a new GitHub token at [Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens) with:
+   - `read:packages` permission
+   - `write:packages` permission
+
+### Log In
+
+With Apptainer:
+```bash
+apptainer remote login --username <your GitHub username> docker://ghcr.io
+```
+
+When prompted, enter your token as the password.
+
+With Docker:
+```bash
+echo <your GitHub token> | docker login ghcr.io -u <your GitHub username> --password-stdin
+```
+
+## 🛠️ Development Notes
+
+### Building Locally for Testing
+
+Test your Dockerfile locally before pushing:
 
 ```bash
-git tag v0.0.1
-git push
-git push origin tag v0.0.1
+docker buildx build -t ml-project-template .
 ```
+
+## 🧪 Running Experiments
 
 ### WandB Logging
 
-Logging to WandB is optional for running local jobs but mandatory for jobs submitted to the cluster.
+Logging to WandB is optional for local jobs but mandatory for jobs submitted to the cluster.
 
-WandB is enabled by specifying an API key, the project and entity in a `.env` file in the root of the repository. You can take the following snippet as a template:
+Create a `.env` file in the root of the repository with:
 
 ```bash
-WANDB_API_KEY=
-WANDB_ENTITY=
-WANDB_PROJECT=
+WANDB_API_KEY=your_api_key_here
+WANDB_ENTITY=your_entity
+WANDB_PROJECT=your_project_name
 ```
 
-### Local
+### Local Execution
 
-You can run a script locally via
+Run a script locally with:
 
 ```bash
 python src/ml_project_template/runs/main.py
 ```
 
-Hydra should automatically generate a `config.yaml` in the `outputs/<date>/<time>/.hydra` folder which you can use to reproduce the same run later. Using the command line arguments, you can override or switch out parts of this config as you will see in the following sections.
+Hydra will automatically generate a `config.yaml` in the `outputs/<date>/<time>/.hydra` folder which you can use to reproduce the same run later.
 
-To log to WandB, add `cfg/wandb=base`:
+To enable WandB logging:
 
 ```bash
 python src/ml_project_template/runs/main.py cfg/wandb=base
 ```
 
-In order to use WandB in offline mode, add `cfg.wandb.mode=offline`:
+For WandB offline mode:
 
 ```bash
 python src/ml_project_template/runs/main.py cfg/wandb=base cfg.wandb.mode=offline
@@ -75,34 +209,28 @@ python src/ml_project_template/runs/main.py cfg/wandb=base cfg.wandb.mode=offlin
 
 ### Single Job
 
-To run the command as a job in the cluster, run
+To run a job on the cluster:
 
 ```bash
 python src/ml_project_template/runs/main.py cfg/job=base
 ```
 
-This will automatically add WandB logging for you. See `src/ml_project_template/configs/runs/base.py` to configure the job to your needs.
+This will automatically enable WandB logging. See `src/ml_project_template/configs/runs/base.py` to configure the job settings.
 
 ### Distributed Sweep
 
-Run a sweep over two seeds using multiple nodes:
+Run a parameter sweep over multiple seeds using multiple nodes:
 
 ```bash
 python src/ml_project_template/runs/main.py cfg/job=sweep
 ```
 
-This will automatically add WandB logging for you. See `src/ml_project_template/configs/runs/base.py` to configure the sweep to your needs.
+This will automatically enable WandB logging. See `src/ml_project_template/configs/runs/base.py` to configure sweep parameters.
 
-## Docker Image
+## 👥 Contributions
 
-The Docker image can be built for `linux/amd64` by running
+Contributions to this documentation and template are very welcome! Feel free to open a PR or reach out with suggestions.
 
-```bash
-docker buildx build -t ml-project-template .
-```
-
-When using VSCode, the Docker image is automatically built when using a Dev Container.
-
-## Acknowledgements
+## 🙏 Acknowledgements
 
 This template is based on a [previous example project](https://github.com/mx-e/example_project_ml_cluster).
