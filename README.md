@@ -56,7 +56,7 @@ Choose one of the following methods to set up your environment:
 
 2. **Install VSCode Command Line Interface (Optional)**
 
-   This step is required if you plan to create a remote tunnel. First, install the [Remote Tunnels](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-server) extentsion in VSCode.
+   This step is required if you plan to create a remote tunnel. First, install the [Remote Tunnels](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-server) extension in VSCode.
 
 3. **Connect to compute resources**
 
