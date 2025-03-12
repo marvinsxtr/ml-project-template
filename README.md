@@ -24,41 +24,32 @@ A modern template for machine learning experimentation using **wandb**, **hydra-
 
 ## 📋 Table of Contents
 
-- [Container Setup](#-container-setup)
-  - [Option 1: Apptainer](#option-1-apptainer)
-  - [Option 2: Docker](#option-2-docker)
-- [Package Management](#-package-management)
-- [Updating the Docker Image](#-updating-the-docker-image)
-- [Container Registry Authentication](#-container-registry-authentication)
-- [Development Notes](#-development-notes)
-- [Running Experiments](#-running-experiments)
+- [🐳 Container Setup](#-container-setup)
+  - [Option 1: Apptainer (Cluster)](#option-1-apptainer-cluster)
+  - [Option 2: Docker (Local Machine)](#option-2-docker-local-machine)
+- [📦 Package Management](#-package-management)
+- [🔄 Updating the Docker Image](#-updating-the-docker-image)
+- [🔑 Container Registry Authentication](#-container-registry-authentication)
+- [🛠️ Development Notes](#️-development-notes)
+- [🧪 Running Experiments](#-running-experiments)
   - [WandB Logging](#wandb-logging)
-  - [Local Execution](#local-execution)
+  - [Example Project](#example-project)
   - [Single Job](#single-job)
   - [Distributed Sweep](#distributed-sweep)
-- [Contributions](#-contributions)
-- [Acknowledgements](#-acknowledgements)
+- [👥 Contributions](#-contributions)
+- [🙏 Acknowledgements](#-acknowledgements)
 
 ## 🐳 Container Setup
 
 Choose one of the following methods to set up your environment:
 
-### Option 1: Apptainer
+### Option 1: Apptainer (Cluster)
 
-1. **Configure environment bindings**
+1. **Install VSCode Remote Tunnels Extension**
 
-   Add to your `.zshrc` or `.bashrc`:
-   
-   ```bash
-   export APPTAINER_BIND=/opt/slurm-23.2,/opt/slurm,/etc/slurm,/etc/munge,/var/log/munge,/var/run/munge,/lib/x86_64-linux-gnu
-   export APPTAINERENV_APPEND_PATH=/opt/slurm/bin:/opt/slurm/sbin
-   ```
+   First, install the [Remote Tunnels](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-server) extension in VSCode.
 
-2. **Install VSCode Command Line Interface (Optional)**
-
-   This step is required if you plan to create a remote tunnel. First, install the [Remote Tunnels](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-server) extension in VSCode.
-
-3. **Connect to compute resources**
+2. **Connect to compute resources**
 
    For CPU resources:
    ```bash
@@ -70,14 +61,16 @@ Choose one of the following methods to set up your environment:
    srun --partition=gpu-2h --gpus-per-task=1 --pty bash
    ```
 
-4. **Launch container**
+3. **Launch container**
 
-   To open a tunnel to connect you local VSCode to the container on the cluster:
+   To open a tunnel to connect your local VSCode to the container on the cluster:
    ```bash
    apptainer run --nv --writable-tmpfs oras://ghcr.io/marvinsxtr/ml-project-template:latest-sif code tunnel
    ```
 
-   In VSCode press `Shift+Alt+P` (Windows/Linux) or `Shift+Cmd+P` (Mac), type connect to tunnel, select GitHub and select your named node on the cluster. Your IDE is now connected to the cluster.
+   > 💡 You can specify a version tag (e.g., `v0.0.1`) instead of `latest`. Available versions are listed at [GitHub Container Registry](https://github.com/marvinsxtr/ml-project-template/pkgs/container/ml-project-template).
+
+   In VSCode press `Shift+Alt+P` (Windows/Linux) or `Shift+Cmd+P` (Mac), type "connect to tunnel", select GitHub and select your named node on the cluster. Your IDE is now connected to the cluster.
 
    To open a shell in the container on the cluster:
    ```bash
@@ -86,15 +79,17 @@ Choose one of the following methods to set up your environment:
 
    > 💡 This may take a few minutes on the first run as the container image is downloaded.
 
-### Option 2: Docker
+### Option 2: Docker (Local Machine)
 
-Run the container directly with:
+1. **Install VSCode Dev Containers Extension**
 
-```bash
-docker run -it --rm --platform=linux/amd64 ghcr.io/marvinsxtr/ml-project-template:latest /bin/bash
-```
+   First, install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension in VSCode.
 
-> 💡 You can specify a version tag (e.g., `v0.0.1`) instead of `latest`. Available versions are listed at [GitHub Container Registry](https://github.com/marvinsxtr/ml-project-template/pkgs/container/ml-project-template).
+2. **Open the Repository in the Dev Container**
+
+   Click the `Reopen in Container` button in the pop-up that appears once you open the repository in VSCode.
+
+   Alternatively, open the command palette in VSCode by pressing `Shift+Alt+P` (Windows/Linux) or `Shift+Cmd+P` (Mac), and type `Dev Containers: Reopen in Container`.
 
 ## 📦 Package Management
 
@@ -102,13 +97,12 @@ This project uses [uv](https://docs.astral.sh/uv/) for Python dependency managem
 
 ### Adding or Updating Dependencies
 
-Inside the container (e.g., [VSCode shell with Docker Container](https://code.visualstudio.com/docs/devcontainers/containers)):
-
+Inside the container:
 ```bash
 # Add a specific package
 uv add <package-name>
 
-# Update all dependencies from pyproject.toml or requirements.txt
+# Update all dependencies from pyproject.toml
 uv sync
 ```
 
@@ -173,6 +167,12 @@ Test your Dockerfile locally before pushing:
 docker buildx build -t ml-project-template .
 ```
 
+Run the container directly with:
+
+```bash
+docker run -it --rm --platform=linux/amd64 ml-project-template /bin/bash
+```
+
 ## 🧪 Running Experiments
 
 ### WandB Logging
@@ -187,9 +187,37 @@ WANDB_ENTITY=your_entity
 WANDB_PROJECT=your_project_name
 ```
 
-### Local Execution
+### Example Project
 
-Run a script locally with:
+The folder `src/example` contains an example project which can serve as a starting point for ML experimentation. Configuring a function 
+```python
+from ml_project_template.utils import logger
+
+def main(foo: int = 42, bar: int = 3) -> None:
+    """Run a main function from a config."""
+    logger.info(f"Hello World! cfg={cfg}, bar={bar}, foo={foo}")
+
+if __name__ == "__main__":
+    main()
+```
+
+is as easy as adding (1) a `Run` as the first argument, (2) importing the config stores and (3) wrapping the `main` function with `run`:
+
+```python
+from ml_project_template.config import run
+from ml_project_template.runs import Run
+from ml_project_template.utils import logger
+
+def main(cfg: Run, foo: int = 42, bar: int = 3) -> None:
+    """Run a main function from a config."""
+    logger.info(f"Hello World! cfg={cfg}, bar={bar}, foo={foo}")
+
+if __name__ == "__main__":
+    from example import stores  # noqa: F401
+    run(main)
+```
+
+You can try running this example with:
 
 ```bash
 python src/example/main.py
@@ -197,13 +225,25 @@ python src/example/main.py
 
 Hydra will automatically generate a `config.yaml` in the `outputs/<date>/<time>/.hydra` folder which you can use to reproduce the same run later.
 
-To enable WandB logging:
+Try overriding the values passed to the `main` function and see how it changes the output (config):
+
+```bash
+python src/example/main.py foo=123
+```
+
+Reproduce the results of a previous run/config:
+
+```bash
+python src/example/main.py -cp outputs/<date>/<time>/.hydra -cn config.yaml
+```
+
+Enabling WandB logging:
 
 ```bash
 python src/example/main.py cfg/wandb=base
 ```
 
-For WandB offline mode:
+Run WandB in offline mode:
 
 ```bash
 python src/example/main.py cfg/wandb=base cfg.wandb.mode=offline
@@ -211,7 +251,7 @@ python src/example/main.py cfg/wandb=base cfg.wandb.mode=offline
 
 ### Single Job
 
-To run a job on the cluster:
+Run a job on the cluster:
 
 ```bash
 python src/example/main.py cfg/job=base
