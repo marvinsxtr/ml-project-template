@@ -74,14 +74,14 @@ Choose one of the following methods to set up your environment:
 
    To open a tunnel to connect you local VSCode to the container on the cluster:
    ```bash
-   apptainer run --nv --writable-tmpfs docker://ghcr.io/marvinsxtr/ml-project-template:main code tunnel
+   apptainer run --nv --writable-tmpfs oras://ghcr.io/marvinsxtr/ml-project-template:latest-sif code tunnel
    ```
 
    In VSCode press `Shift+Alt+P` (Windows/Linux) or `Shift+Cmd+P` (Mac), type connect to tunnel, select GitHub and select your named node on the cluster. Your IDE is now connected to the cluster.
 
    To open a shell in the container on the cluster:
    ```bash
-   apptainer run --nv --writable-tmpfs docker://ghcr.io/marvinsxtr/ml-project-template:main /bin/bash
+   apptainer run --nv --writable-tmpfs oras://ghcr.io/marvinsxtr/ml-project-template:latest-sif /bin/bash
    ```
 
    > 💡 This may take a few minutes on the first run as the container image is downloaded.
@@ -91,10 +91,10 @@ Choose one of the following methods to set up your environment:
 Run the container directly with:
 
 ```bash
-docker run -it --rm --platform=linux/amd64 ghcr.io/marvinsxtr/ml-project-template:main /bin/bash
+docker run -it --rm --platform=linux/amd64 ghcr.io/marvinsxtr/ml-project-template:latest /bin/bash
 ```
 
-> 💡 You can specify a version tag (e.g., `v0.0.1`) instead of `main`. Available versions are listed at [GitHub Container Registry](https://github.com/marvinsxtr/ml-project-template/pkgs/container/ml-project-template).
+> 💡 You can specify a version tag (e.g., `v0.0.1`) instead of `latest`. Available versions are listed at [GitHub Container Registry](https://github.com/marvinsxtr/ml-project-template/pkgs/container/ml-project-template).
 
 ## 📦 Package Management
 
@@ -133,7 +133,7 @@ uv sync
 
    With Apptainer:
    ```bash
-   apptainer run --nv --writable-tmpfs docker://ghcr.io/marvinsxtr/ml-project-template:v0.0.1 /bin/bash
+   apptainer run --nv --writable-tmpfs oras://ghcr.io/marvinsxtr/ml-project-template:v0.0.1-sif /bin/bash
    ```
 
    With Docker:
@@ -156,12 +156,12 @@ With Apptainer:
 apptainer remote login --username <your GitHub username> docker://ghcr.io
 ```
 
-When prompted, enter your token as the password.
-
 With Docker:
 ```bash
-echo <your GitHub token> | docker login ghcr.io -u <your GitHub username> --password-stdin
+docker login ghcr.io -u <your GitHub username>
 ```
+
+When prompted, enter your token as the password.
 
 ## 🛠️ Development Notes
 
@@ -182,7 +182,7 @@ Logging to WandB is optional for local jobs but mandatory for jobs submitted to 
 Create a `.env` file in the root of the repository with:
 
 ```bash
-WANDB_API_KEY=your_api_key_here
+WANDB_API_KEY=your_api_key
 WANDB_ENTITY=your_entity
 WANDB_PROJECT=your_project_name
 ```
