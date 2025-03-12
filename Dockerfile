@@ -22,10 +22,14 @@ RUN wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/
     rm /tmp/vscode-server-cli.tar.gz
 
 # Slurm
-RUN groupadd -g 12067 slurm
-RUN useradd  -m -d /tmp -u 13504 -g slurm -s /bin/false slurm
-RUN groupadd -g 119 munge
-RUN useradd  -m -d /nonexistent -u 114 -g munge -s /usr/sbin/nologin munge
+RUN COMMANDS="sacct sacctmgr salloc sattach sbatch sbcast scancel scontrol sdiag sgather sinfo smap sprio squeue sreport srun sshare sstat strigger sview" \
+    && for CMD in $COMMANDS; do \
+        cat > "/usr/local/bin/$CMD" << EOF
+    #!/bin/bash
+    ssh \$USER@\$SLURM_CLUSTER_NAME "bash -l -c '$CMD \"\$@\"'"
+    EOF
+        chmod +x "/usr/local/bin/$CMD"; \
+    done
 
 FROM linux-base AS python-base
 
