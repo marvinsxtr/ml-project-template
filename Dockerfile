@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS linux-base
+FROM --platform=linux/amd64 python:3.12-slim AS linux-base
 
 # Environment variables
 ENV UV_PROJECT_ENVIRONMENT="/venv"
@@ -13,7 +13,8 @@ RUN rm -f /etc/apt/sources.list.d/*.list
 # Utilities
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y --no-install-recommends build-essential \
-    sudo curl git htop less rsync screen vim nano wget openssh-client
+    sudo curl git htop less rsync screen vim nano wget ca-certificates \
+    openssh-client zsh
 
 # Download and install VS Code Server CLI
 RUN wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/latest/cli-linux-x64/stable" && \
@@ -24,11 +25,9 @@ RUN wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/
 # Slurm
 RUN COMMANDS="sacct sacctmgr salloc sattach sbatch sbcast scancel scontrol sdiag sgather sinfo smap sprio squeue sreport srun sshare sstat strigger sview" \
     && for CMD in $COMMANDS; do \
-        cat > "/usr/local/bin/$CMD" << EOF
-    #!/bin/bash
-    ssh \$USER@\$SLURM_CLUSTER_NAME "bash -l -c '$CMD \"\$@\"'"
-    EOF
-        chmod +x "/usr/local/bin/$CMD"; \
+        echo '#!/bin/bash' > "/usr/local/bin/$CMD" \
+        && echo 'ssh $USER@$SLURM_CLUSTER_NAME "bash -l -c '\'''"$CMD"' \"$@\"'\''"' >> "/usr/local/bin/$CMD" \
+        && chmod +x "/usr/local/bin/$CMD"; \
     done
 
 FROM linux-base AS python-base
