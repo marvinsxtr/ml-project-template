@@ -6,7 +6,7 @@ import wandb
 from dotenv import load_dotenv
 from wandb.wandb_run import Run
 
-from ml_project_template.common.logging.logger import logger
+from ml_project_template.utils import logger
 
 
 @dataclass
@@ -21,9 +21,8 @@ class WandBConfig:
     def from_env(cls) -> Self | None:
         """Read WandB environment variables.
 
-        Returns
-        -------
-        Populated `WandBConfig` or None if environment variables could not be found.
+        Returns:
+            Populated `WandBConfig` or None if environment variables could not be found.
         """
         config = None
         load_dotenv()
@@ -46,13 +45,11 @@ class WandBRun:
         **kwargs,
     ) -> None:
         """Args:
-        ----
             entity: WandB entity. Defaults to None.
             project: WandB entity. Defaults to None.
             kwargs: See `wandb.init`.
 
-        Raises
-        ------
+        Raises:
             TypeError: In case the WandB run could not be initialized.
         """
         if (config := WandBConfig.from_env()) is not None:

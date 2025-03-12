@@ -13,7 +13,7 @@ RUN rm -f /etc/apt/sources.list.d/*.list
 # Utilities
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y --no-install-recommends build-essential \
-    sudo curl git htop less rsync screen vim nano wget
+    sudo curl git htop less rsync screen vim nano wget openssh-client
 
 # Download and install VS Code Server CLI
 RUN wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/latest/cli-linux-x64/stable" && \

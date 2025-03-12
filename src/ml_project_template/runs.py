@@ -10,9 +10,8 @@ import yaml
 from submitit import AutoExecutor
 from submitit.helpers import CommandFunction
 
-from ml_project_template.common.logging.logger import get_hydra_output_dir, logger
-from ml_project_template.common.logging.wandb import WandBConfig
-from ml_project_template.common.utils.constants import ConfigKeys
+from ml_project_template.utils import ConfigKeys, get_hydra_output_dir, logger
+from ml_project_template.wandb import WandBConfig, WandBRun
 
 
 @dataclass
@@ -156,3 +155,12 @@ class SweepJob(Job):
 
         for job in jobs:
             logger.info(f"Submitted job {job.job_id}")
+
+
+@dataclass
+class Run:
+    """Configures a basic run."""
+
+    seed: int
+    wandb: WandBRun | None = None
+    job: Job | None = None
