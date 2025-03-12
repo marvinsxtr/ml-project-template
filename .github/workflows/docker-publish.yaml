@@ -92,14 +92,13 @@ jobs:
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
-      - name: Clean up disk space
-        uses: jlumbroso/free-disk-space@main
+      # Build and push .sif files for Apptainer
       - name: Setup Apptainer
         uses: eWaterCycle/setup-apptainer@v2
       - name: Build and push Apptainer
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-           echo ${{ secrets.GITHUB_TOKEN }} | apptainer remote login -u ${{ secrets.GHCR_USERNAME }} --password-stdin docker://ghcr.io
+           echo ${{ secrets.GITHUB_TOKEN }} | apptainer registry login -u ${{ secrets.GHCR_USERNAME }} --password-stdin docker://ghcr.io
            apptainer build container.sif docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
            echo "${TAGS}" | xargs -I {} apptainer push container.sif oras://{}-sif
