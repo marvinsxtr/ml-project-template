@@ -189,7 +189,7 @@ WANDB_PROJECT=your_project_name
 
 ### Example Project
 
-The folder `src/example` contains an example project which can serve as a starting point for ML experimentation. Configuring a function 
+The folder `example` contains an example project which can serve as a starting point for ML experimentation. Configuring a function 
 ```python
 from ml_project_template.utils import logger
 
@@ -220,7 +220,7 @@ if __name__ == "__main__":
 You can try running this example with:
 
 ```bash
-python src/example/main.py
+python example/main.py
 ```
 
 Hydra will automatically generate a `config.yaml` in the `outputs/<date>/<time>/.hydra` folder which you can use to reproduce the same run later.
@@ -228,25 +228,25 @@ Hydra will automatically generate a `config.yaml` in the `outputs/<date>/<time>/
 Try overriding the values passed to the `main` function and see how it changes the output (config):
 
 ```bash
-python src/example/main.py foo=123
+python example/main.py foo=123
 ```
 
 Reproduce the results of a previous run/config:
 
 ```bash
-python src/example/main.py -cp outputs/<date>/<time>/.hydra -cn config.yaml
+python example/main.py -cp outputs/<date>/<time>/.hydra -cn config.yaml
 ```
 
 Enabling WandB logging:
 
 ```bash
-python src/example/main.py cfg/wandb=base
+python example/main.py cfg/wandb=base
 ```
 
 Run WandB in offline mode:
 
 ```bash
-python src/example/main.py cfg/wandb=base cfg.wandb.mode=offline
+python example/main.py cfg/wandb=base cfg.wandb.mode=offline
 ```
 
 ### Single Job
@@ -254,20 +254,20 @@ python src/example/main.py cfg/wandb=base cfg.wandb.mode=offline
 Run a job on the cluster:
 
 ```bash
-python src/example/main.py cfg/job=base
+python example/main.py cfg/job=base
 ```
 
-This will automatically enable WandB logging. See `src/example/configs.py` to configure the job settings.
+This will automatically enable WandB logging. See `example/configs.py` to configure the job settings.
 
 ### Distributed Sweep
 
 Run a parameter sweep over multiple seeds using multiple nodes:
 
 ```bash
-python src/example/main.py cfg/job=sweep
+python example/main.py cfg/job=sweep
 ```
 
-This will automatically enable WandB logging. See `src/example/configs.py` to configure sweep parameters.
+This will automatically enable WandB logging. See `example/configs.py` to configure sweep parameters.
 
 ## 👥 Contributions
 

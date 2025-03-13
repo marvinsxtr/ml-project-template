@@ -41,6 +41,9 @@ name = "pytorch-cu124"
 url = "https://download.pytorch.org/whl/cu124"
 explicit = true
 
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
 [tool.mypy]
 explicit_package_bases = true
 disable_error_code = ["import-untyped"]
