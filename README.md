@@ -24,12 +24,11 @@ A modern template for machine learning experimentation using **wandb**, **hydra-
 
 ## 📋 Table of Contents
 
+- [🔑 Container Registry Authentication](#-container-registry-authentication)
 - [🐳 Container Setup](#-container-setup)
   - [Option 1: Apptainer (Cluster)](#option-1-apptainer-cluster)
   - [Option 2: Docker (Local Machine)](#option-2-docker-local-machine)
 - [📦 Package Management](#-package-management)
-- [🔄 Updating the Docker Image](#-updating-the-docker-image)
-- [🔑 Container Registry Authentication](#-container-registry-authentication)
 - [🛠️ Development Notes](#️-development-notes)
 - [🧪 Running Experiments](#-running-experiments)
   - [WandB Logging](#wandb-logging)
@@ -38,6 +37,28 @@ A modern template for machine learning experimentation using **wandb**, **hydra-
   - [Distributed Sweep](#distributed-sweep)
 - [👥 Contributions](#-contributions)
 - [🙏 Acknowledgements](#-acknowledgements)
+
+## 🔑 Container Registry Authentication
+
+### Generate Token
+
+1. Create a new GitHub token at [Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens) with:
+   - `read:packages` permission
+   - `write:packages` permission
+
+### Log In
+
+With Apptainer:
+```bash
+apptainer remote login --username <your GitHub username> docker://ghcr.io
+```
+
+With Docker:
+```bash
+docker login ghcr.io -u <your GitHub username>
+```
+
+When prompted, enter your token as the password.
 
 ## 🐳 Container Setup
 
@@ -93,22 +114,18 @@ Choose one of the following methods to set up your environment:
 
 ## 📦 Package Management
 
-This project uses [uv](https://docs.astral.sh/uv/) for Python dependency management.
+1. **Update dependencies**
 
-### Adding or Updating Dependencies
+   This project uses [uv](https://docs.astral.sh/uv/) for Python dependency management.
 
-Inside the container:
-```bash
-# Add a specific package
-uv add <package-name>
+   Inside the container (!):
+   ```bash
+   # Add a specific package
+   uv add <package-name>
 
-# Update all dependencies from pyproject.toml
-uv sync
-```
-
-## 🔄 Updating the Docker Image
-
-1. **Update dependencies** using `uv` as described above
+   # Update all dependencies from pyproject.toml
+   uv sync
+   ```
 
 2. **Commit changes** to the repository:
 
@@ -134,28 +151,6 @@ uv sync
    ```bash
    docker run -it --rm --platform=linux/amd64 ghcr.io/marvinsxtr/ml-project-template:v0.0.1 /bin/bash
    ```
-
-## 🔑 Container Registry Authentication
-
-### Generate Token
-
-1. Create a new GitHub token at [Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens) with:
-   - `read:packages` permission
-   - `write:packages` permission
-
-### Log In
-
-With Apptainer:
-```bash
-apptainer remote login --username <your GitHub username> docker://ghcr.io
-```
-
-With Docker:
-```bash
-docker login ghcr.io -u <your GitHub username>
-```
-
-When prompted, enter your token as the password.
 
 ## 🛠️ Development Notes
 

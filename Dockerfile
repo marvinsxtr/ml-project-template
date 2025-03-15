@@ -15,7 +15,7 @@ RUN wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/
 # Slurm
 RUN COMMANDS="sacct sacctmgr salloc sattach sbatch sbcast scancel scontrol sdiag sgather sinfo smap sprio squeue sreport srun sshare sstat strigger sview" \
     && for CMD in $COMMANDS; do echo '#!/bin/bash' > "/usr/local/bin/$CMD" \
-    && echo 'ssh $USER@$SLURM_CLUSTER_NAME "bash -l -c '\'''"$CMD"' \"$@\"'\''"' >> "/usr/local/bin/$CMD" \
+    && echo 'ssh $USER@$SLURM_CLUSTER_NAME -t "cd $PWD; . ~/.zshrc 2>/dev/null || . ~/.bashrc 2>/dev/null; bash -lc '\'$CMD \$@\''"' >> "/usr/local/bin/$CMD" \
     && chmod +x "/usr/local/bin/$CMD"; done
 
 FROM linux-base AS python-base
