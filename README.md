@@ -112,6 +112,30 @@ Choose one of the following methods to set up your environment:
 
    Alternatively, open the command palette in VSCode by pressing `Shift+Alt+P` (Windows/Linux) or `Shift+Cmd+P` (Mac), and type `Dev Containers: Reopen in Container`.
 
+### Using Slurm within Apptainer
+
+In order to access Slurm with submitit from within the container, you first need to set up passwordless SSH to the login node.
+
+On the cluster, create a new SSH key pair in case you don't have one yet
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+and add your public key to the `authorized_keys`:
+
+```bash
+cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
+```
+
+You can verify that this works by running
+
+```bash
+ssh $USER@$HOST exit
+```
+
+which should return without any prompt.
+
 ## 📦 Package Management
 
 1. **Update dependencies**
