@@ -48,7 +48,7 @@ class SlurmParams:
 class Job:
     """Job to run code on a cluster using apptainer."""
 
-    image: str = "docker://ghcr.io/marvinsxtr/ml-project-template:main"
+    image: str = "oras://ghcr.io/marvinsxtr/ml-project-template:latest-sif"
     cluster: str = "slurm"
     slurm_params: SlurmParams = field(default_factory=SlurmParams)
     wait_for_job: bool = False
@@ -66,7 +66,7 @@ class Job:
     @property
     def python_command(self) -> str:
         """Python command used by the job."""
-        return f"apptainer exec {self.image} python"
+        return f"apptainer run {self.image} python"
 
     def run(self) -> None:
         """Run the job on the cluster."""
