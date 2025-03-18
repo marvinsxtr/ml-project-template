@@ -42,7 +42,7 @@ url = "https://download.pytorch.org/whl/cu124"
 explicit = true
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = [".", "src"]
 
 [tool.mypy]
 explicit_package_bases = true
