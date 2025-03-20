@@ -12,6 +12,3 @@ wandb_store(WandBConfig, name="base")
 job_store = store(group="cfg/job")
 job_store(JobConfig, name="base")
 job_store(SweepConfig, name="sweep")
-
-foo_store = store(group="foo")
-foo_store(RunConfig, name="test")
