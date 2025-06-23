@@ -93,6 +93,8 @@ jobs:
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
       # Build and push .sif files for Apptainer
+      - name: Clean up disk space
+        uses: jlumbroso/free-disk-space@main
       - name: Setup Apptainer
         uses: eWaterCycle/setup-apptainer@v2
       - name: Build and push Apptainer
