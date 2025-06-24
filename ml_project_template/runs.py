@@ -1,4 +1,3 @@
-import math
 import subprocess
 import sys
 import tempfile
@@ -70,7 +69,14 @@ class Job:
 
     def run(self) -> None:
         """Run the job on the cluster."""
-        command = ["python", *self.filter_args(sys.argv), "cfg/wandb=base"]
+        hydra_run_dir = "./outputs/runs/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}"
+
+        command = [
+            "python",
+            *self.filter_args(sys.argv),
+            "cfg/wandb=base",
+            f"hydra.run.dir={hydra_run_dir}",
+        ]
 
         function = CommandFunction(command)
         executor = AutoExecutor(
@@ -127,7 +133,20 @@ class SweepJob(Job):
         parameters = {cfg_key: {"values": list(values)} for cfg_key, values in self.parameters.items()}
         metric = {"goal": self.metric_goal, "name": self.metric_name}
         program, args = sys.argv[0], self.filter_args(sys.argv[1:])
-        command = ["${env}", "${interpreter}", "${program}", *args, "cfg/wandb=base", "${args_no_hyphens}"]
+
+        folder_path = get_hydra_output_dir()
+        dummy_sweep_id = "sweep_started_" + Path(folder_path).parts[-2] + "_" + Path(folder_path).parts[-1]
+        hydra_run_dir = "./outputs/sweeps/" + dummy_sweep_id + "/${now:%H-%M-%S-%f}"
+
+        command = [
+            "${env}",
+            "${interpreter}",
+            "${program}",
+            *args,
+            "cfg/wandb=base",
+            f"hydra.run.dir={hydra_run_dir}",
+            "${args_no_hyphens}",
+        ]
 
         sweep_config = {
             "program": program,
@@ -141,7 +160,7 @@ class SweepJob(Job):
 
         function = CommandFunction(["wandb", "agent"])
         executor = AutoExecutor(
-            folder=get_hydra_output_dir(),
+            folder=folder_path,
             cluster=self.cluster,
             slurm_python=self.python_command,
         )
@@ -150,8 +169,7 @@ class SweepJob(Job):
             **self.slurm_params.to_submitit_params(),
         )
 
-        num_jobs = math.prod([len(v) for v in self.parameters.values()])
-        jobs = executor.map_array(function, [sweep_id] * num_jobs)
+        jobs = executor.map_array(function, [sweep_id] * self.num_workers)
 
         for job in jobs:
             logger.info(f"Submitted job {job.job_id}")
