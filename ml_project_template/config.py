@@ -7,15 +7,16 @@ from hydra_zen import instantiate, store, to_yaml, zen
 from hydra_zen.third_party.pydantic import pydantic_parser
 from omegaconf import DictConfig, OmegaConf
 
-from ml_project_template.utils import ConfigKeys, get_hydra_output_dir, logger, seed_everything
+from ml_project_template.utils import ConfigKeys, get_output_dir, logger
 from ml_project_template.wandb import WandBRun
 
 
-def pre_call(root_config: DictConfig, log_debug: bool = False) -> None:
+def pre_call(root_config: DictConfig, seed_fn: Callable[[int], None] | None = None, log_debug: bool = False) -> None:
     """Logs the config, sets the seed and initializes a WandB run before config instantiation.
 
     Args:
         root_config: Unresolved config.
+        seed_fn: Function to use for seeding the run.
         log_debug: Whether to log the config, seed and output path.
     """
     if log_debug:
@@ -27,7 +28,10 @@ def pre_call(root_config: DictConfig, log_debug: bool = False) -> None:
         return
 
     if (seed := config.get(ConfigKeys.SEED)) is not None:
-        seed_everything(seed)
+        if seed_fn is None:
+            raise ValueError("No seeding function was set for the given seed.")
+
+        seed_fn(seed)
         logger.debug(f"Set seed to {seed}.")
     else:
         logger.warning("No seed was configured! Run may not be reproducible.")
@@ -37,7 +41,7 @@ def pre_call(root_config: DictConfig, log_debug: bool = False) -> None:
     else:
         logger.debug(f"Running config:\n{to_yaml(root_config)}")
 
-    output_path = get_hydra_output_dir()
+    output_path = get_output_dir()
     logger.debug(f"Saving outputs in {output_path}")
 
     logger.setLevel(logging.INFO)
@@ -48,17 +52,18 @@ def pre_call(root_config: DictConfig, log_debug: bool = False) -> None:
         wandb.save(output_path / ".hydra/*", base_path=output_path, policy="now")
 
 
-def run(main_function: Callable, log_debug: bool = True) -> None:
+def run(main_function: Callable, seed_fn: Callable[[int], None] | None = None, log_debug: bool = True) -> None:
     """Configure and run a given function using hydra-zen.
 
     Args:
         main_function: Function to configure and run.
+        seed_fn: Function to use for seeding the run.
         log_debug: Whether to log debug information from the `pre_call` function.
     """
     store.add_to_hydra_store()
     zen(
         main_function,
-        pre_call=partial(pre_call, log_debug=log_debug),
+        pre_call=partial(pre_call, seed_fn=seed_fn, log_debug=log_debug),
         resolve_pre_call=False,
         instantiation_wrapper=pydantic_parser,
     ).hydra_main(
