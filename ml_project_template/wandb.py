@@ -3,7 +3,7 @@ from dataclasses import dataclass, fields
 from typing import Self
 
 import wandb
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 from wandb.wandb_run import Run
 
 from ml_project_template.utils import logger
@@ -25,7 +25,7 @@ class WandBConfig:
             Populated `WandBConfig` or None if environment variables could not be found.
         """
         config = None
-        load_dotenv()
+        load_dotenv(find_dotenv(usecwd=True))
 
         try:
             config = cls(**{field.name: os.environ[field.name] for field in fields(cls)})

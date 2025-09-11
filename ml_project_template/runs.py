@@ -9,7 +9,7 @@ import yaml
 from submitit import AutoExecutor
 from submitit.helpers import CommandFunction
 
-from ml_project_template.utils import ConfigKeys, get_hydra_output_dir, logger
+from ml_project_template.utils import ConfigKeys, get_output_dir, logger
 from ml_project_template.wandb import WandBConfig, WandBRun
 
 
@@ -80,7 +80,7 @@ class Job:
 
         function = CommandFunction(command)
         executor = AutoExecutor(
-            folder=get_hydra_output_dir(),
+            folder=get_output_dir(),
             cluster=self.cluster,
             slurm_python=self.python_command,
         )
@@ -134,7 +134,7 @@ class SweepJob(Job):
         metric = {"goal": self.metric_goal, "name": self.metric_name}
         program, args = sys.argv[0], self.filter_args(sys.argv[1:])
 
-        folder_path = get_hydra_output_dir()
+        folder_path = get_output_dir()
         dummy_sweep_id = "sweep_started_" + Path(folder_path).parts[-2] + "_" + Path(folder_path).parts[-1]
         hydra_run_dir = "./outputs/sweeps/" + dummy_sweep_id + "/${now:%H-%M-%S-%f}"
 
@@ -179,6 +179,6 @@ class SweepJob(Job):
 class Run:
     """Configures a basic run."""
 
-    seed: int
+    seed: int | None = None
     wandb: WandBRun | None = None
     job: Job | None = None

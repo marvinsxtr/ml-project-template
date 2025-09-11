@@ -3,7 +3,7 @@ from hydra_zen import builds
 from ml_project_template.runs import Job, Run, SlurmParams, SweepJob
 from ml_project_template.wandb import WandBRun
 
-RunConfig = builds(Run, seed=42, wandb=None, job=None)
+RunConfig = builds(Run, seed=None, wandb=None, job=None)
 
 SlurmParamsConfig = builds(
     SlurmParams,
@@ -18,6 +18,6 @@ SlurmParamsConfig = builds(
 
 JobConfig = builds(Job, slurm_params=SlurmParamsConfig)
 
-SweepConfig = builds(SweepJob, num_workers=2, parameters={"cfg.seed": [42, 1337]}, builds_bases=(JobConfig,))
+SweepConfig = builds(SweepJob, num_workers=2, parameters={"foo": [42, 1337]}, builds_bases=(JobConfig,))
 
 WandBConfig = builds(WandBRun, group=None, mode="online")
