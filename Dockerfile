@@ -1,10 +1,8 @@
 FROM --platform=linux/amd64 python:3.12-slim AS linux-base
 
 # Utilities
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y --no-install-recommends build-essential \
-    sudo curl git htop less rsync screen vim nano wget ca-certificates \
-    openssh-client zsh
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends build-essential \
+    sudo curl git htop less rsync screen vim nano wget ca-certificates openssh-client zsh procps psmisc
 
 # Download and install VS Code Server CLI
 RUN wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/latest/cli-linux-x64/stable" && \
@@ -39,4 +37,4 @@ COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /usr/local/bin/uv
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev
+    uv sync --frozen --no-install-project --all-groups
