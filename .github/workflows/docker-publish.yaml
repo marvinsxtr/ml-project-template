@@ -32,6 +32,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Clean up disk space
+        uses: jlumbroso/free-disk-space@main
+
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
@@ -77,24 +80,23 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Sign the resulting Docker image digest except on PRs.
-      # This will only write to the public Rekor transparency log when the Docker
-      # repository is public to avoid leaking data.  If you would like to publish
-      # transparency data even for private images, pass --force to cosign below.
-      # https://github.com/sigstore/cosign
-      - name: Sign the published Docker image
-        if: ${{ github.event_name != 'pull_request' }}
-        env:
-          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        # This step uses the identity token to provision an ephemeral certificate
-        # against the sigstore community Fulcio instance.
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+      - name: Free disk space after Docker build
+        run: |
+          docker buildx ls --format '{{.Name}}' | grep -v default | xargs -I {} docker buildx rm {} 2>/dev/null || true
+          docker system prune -af --volumes
+          docker builder prune -af
+
+          rm -rf ~/.docker/buildx || true
+          rm -rf /tmp/docker-actions-toolkit-*/* 2>/dev/null || true
+
+          df -h /
+
+      - id: lower-repo
+        name: Repository to lowercase
+        run: |
+          echo "repository=${GITHUB_REPOSITORY@L}" >> $GITHUB_OUTPUT
 
       # Build and push .sif files for Apptainer
-      - name: Clean up disk space
-        uses: jlumbroso/free-disk-space@main
       - name: Setup Apptainer
         uses: eWaterCycle/setup-apptainer@v2
       - name: Build and push Apptainer
@@ -102,5 +104,5 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
            echo ${{ secrets.GITHUB_TOKEN }} | apptainer registry login -u ${{ secrets.GHCR_USERNAME }} --password-stdin docker://ghcr.io
-           apptainer build container.sif docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+           apptainer build container.sif docker://${{ env.REGISTRY }}/${{ steps.lower-repo.outputs.repository }}:latest
            echo "${TAGS}" | xargs -I {} apptainer push container.sif oras://{}-sif
