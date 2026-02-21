@@ -1,6 +1,6 @@
 from typing import NamedTuple
 
-from hydra_zen import MISSING, builds
+from hydra_zen import builds
 
 from ml_project_template.runs import Job, SlurmParams, SweepJob
 from ml_project_template.wandb import WandBRun
@@ -9,15 +9,13 @@ from ml_project_template.wandb import WandBRun
 class Run(NamedTuple):
     """Configures a basic run."""
 
-    foo: int
-    bar: int
     seed: int | None = None
     wandb: WandBRun | None = None
     job: Job | None = None
     commit: str | None = None
 
 
-RunConfig = builds(Run, foo=42, bar=3, commit=MISSING)
+RunConfig = builds(Run, commit=None)
 
 SlurmParamsConfig = builds(
     SlurmParams,
@@ -32,6 +30,6 @@ SlurmParamsConfig = builds(
 
 JobConfig = builds(Job, image="oras://ghcr.io/marvinsxtr/causal-fm:latest-sif", slurm_params=SlurmParamsConfig)
 
-SweepConfig = builds(SweepJob, num_workers=2, parameters={"cfg.foo": [42, 1337]}, builds_bases=(JobConfig,))
+SweepConfig = builds(SweepJob, num_workers=2, parameters={"foo": [42, 1337]}, builds_bases=(JobConfig,))
 
 WandBConfig = builds(WandBRun, group=None, mode="online")

@@ -13,6 +13,6 @@ def wrap(config: DictConfig) -> None:
 
 def test_example_config(capsys: pytest.CaptureFixture[str]) -> None:
     """Test main config."""
-    launch(MainConfig(cfg=RunConfig), task_function=wrap, version_base=None, overrides=["cfg.foo=123"])
+    launch(MainConfig(cfg=RunConfig), task_function=wrap, version_base=None, overrides=["foo=123"])
     captured = capsys.readouterr()
     assert "foo=123" in captured.out

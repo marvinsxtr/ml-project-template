@@ -214,34 +214,26 @@ from ml_project_template.utils import logger
 
 def main(foo: int = 42, bar: int = 3) -> None:
     """Run a main function from a config."""
-    logger.info(f"Hello World! foo={foo}, bar={bar}")
+    logger.info(f"Hello World! cfg={cfg}, bar={bar}, foo={foo}")
 
 if __name__ == "__main__":
     main()
 ```
 
-is as easy as defining (1) a `Run` config, (2) importing the config stores and (3) wrapping the `main` function with `run`:
+is as easy as adding (1) a `Run` as the first argument, (2) importing the config stores and (3) wrapping the `main` function with `run`:
 
 ```python
-from typing import NamedTuple
-
 from ml_project_template.config import run
-from ml_project_template.runs import Job
-from ml_project_template.utils import basic_seed_fn, logger
-from ml_project_template.wandb import WandBRun
+from ml_project_template.runs import Run
+from ml_project_template.utils import logger
 
-
-class Run(NamedTuple):
-    foo: int
-    bar: int
-
-def main(cfg: Run) -> None:
+def main(cfg: Run, foo: int = 42, bar: int = 3) -> None:
     """Run a main function from a config."""
-    logger.info(f"Hello World! foo={cfg.foo}, bar={cfg.bar}")
+    logger.info(f"Hello World! cfg={cfg}, bar={bar}, foo={foo}")
 
 if __name__ == "__main__":
     from example import stores  # noqa: F401
-    run(main, seed_fn=basic_seed_fn)
+    run(main)
 ```
 
 You can try running this example with:
@@ -255,7 +247,7 @@ Hydra will automatically generate a `config.yaml` in the `outputs/<date>/<time>/
 Try overriding the values passed to the `main` function and see how it changes the output (config):
 
 ```bash
-python example/main.py cfg.foo=123
+python example/main.py foo=123
 ```
 
 Reproduce the results of a previous run/config:
