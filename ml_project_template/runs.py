@@ -1,16 +1,13 @@
-import subprocess
 import sys
-import tempfile
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any, Literal
 
-import yaml
 from submitit import AutoExecutor
 from submitit.helpers import CommandFunction
 
 from ml_project_template.utils import ConfigKeys, get_output_dir, logger
-from ml_project_template.wandb import WandBConfig, WandBRun
+from ml_project_template.wandb import register_sweep
 
 
 @dataclass
@@ -20,8 +17,9 @@ class SlurmParams:
     partition: str | None = None
     cpus_per_task: int | None = None
     gpus_per_task: int | None = None
+    gpus_per_node: int | None = None
     mem_gb: int | None = None
-    excluded_nodes: list[str] = field(default_factory=list)
+    exclude: str | None = None
     constraint: str | None = None
     time_hours: int | None = None
     nodes: int | None = None
@@ -34,8 +32,6 @@ class SlurmParams:
         for param in fields(self):
             if (value := getattr(self, param.name)) is not None:
                 match param.name:
-                    case "excluded_nodes":
-                        params["slurm_exclude"] = ",".join(value)
                     case "time_hours":
                         params["slurm_time"] = f"{value}:00:00"
                     case _:
@@ -47,7 +43,8 @@ class SlurmParams:
 class Job:
     """Job to run code on a cluster using apptainer."""
 
-    image: str = "oras://ghcr.io/marvinsxtr/ml-project-template:latest-sif"
+    image: str | None = None
+    dataset: str | None = None
     cluster: str = "slurm"
     slurm_params: SlurmParams = field(default_factory=SlurmParams)
     wait_for_job: bool = False
@@ -65,7 +62,7 @@ class Job:
     @property
     def python_command(self) -> str:
         """Python command used by the job."""
-        return f"apptainer run {self.image} python"
+        return f"apptainer run --nv {self.image} python"
 
     def run(self) -> None:
         """Run the job on the cluster."""
@@ -85,7 +82,10 @@ class Job:
             slurm_python=self.python_command,
         )
 
-        executor.update_parameters(timeout_min=self.timeout_min, **self.slurm_params.to_submitit_params())
+        executor.update_parameters(
+            timeout_min=self.timeout_min,
+            **self.slurm_params.to_submitit_params(),
+        )
         job = executor.submit(function)
 
         logger.info(f"Submitted job {job.job_id}")
@@ -102,31 +102,6 @@ class SweepJob(Job):
     parameters: dict[str, list[Any]] = field(default_factory=dict)
     metric_name: str = "loss"
     metric_goal: Literal["maximize", "minimize"] = "minimize"
-
-    def register_sweep(self, sweep_config: dict) -> str:
-        """Register a wandb sweep from a config."""
-        if (wandb_config := WandBConfig.from_env()) is None:
-            raise RuntimeError("No WandB config found in environment.")
-
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            config_path = Path(tmp_dir) / "sweep_config.yaml"
-
-            with Path.open(config_path, "w") as config_file:
-                yaml.dump(sweep_config, config_file)
-
-            output = subprocess.run(
-                ["wandb", "sweep", "--project", wandb_config.WANDB_PROJECT, str(config_path)],
-                check=True,
-                text=True,
-                capture_output=True,
-            ).stderr
-
-            sweep_id = output.split(" ")[-1].strip()
-
-            for line in output.splitlines():
-                logger.info(line)
-
-        return sweep_id
 
     def run(self) -> None:
         """Run the sweep on the cluster."""
@@ -156,7 +131,7 @@ class SweepJob(Job):
             "command": command,
         }
 
-        sweep_id = self.register_sweep(sweep_config)
+        sweep_id = register_sweep(sweep_config)
 
         function = CommandFunction(["wandb", "agent"])
         executor = AutoExecutor(
@@ -165,6 +140,7 @@ class SweepJob(Job):
             slurm_python=self.python_command,
         )
         executor.update_parameters(
+            timeout_min=self.timeout_min,
             slurm_array_parallelism=self.num_workers,
             **self.slurm_params.to_submitit_params(),
         )
@@ -173,12 +149,3 @@ class SweepJob(Job):
 
         for job in jobs:
             logger.info(f"Submitted job {job.job_id}")
-
-
-@dataclass
-class Run:
-    """Configures a basic run."""
-
-    seed: int | None = None
-    wandb: WandBRun | None = None
-    job: Job | None = None

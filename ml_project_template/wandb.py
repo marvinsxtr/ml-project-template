@@ -1,8 +1,12 @@
 import os
+import subprocess
+import tempfile
 from dataclasses import dataclass, fields
+from pathlib import Path
 from typing import Self
 
 import wandb
+import yaml
 from dotenv import find_dotenv, load_dotenv
 from wandb.wandb_run import Run
 
@@ -62,3 +66,29 @@ class WandBRun:
             raise TypeError("Could not initalize WandB run.")
 
         self.run = run
+
+
+def register_sweep(sweep_config: dict) -> str:
+    """Register a wandb sweep from a config."""
+    if (wandb_config := WandBConfig.from_env()) is None:
+        raise RuntimeError("No WandB config found in environment.")
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        config_path = Path(tmp_dir) / "sweep_config.yaml"
+
+        with Path.open(config_path, "w") as config_file:
+            yaml.dump(sweep_config, config_file)
+
+        output = subprocess.run(
+            ["wandb", "sweep", "--project", wandb_config.WANDB_PROJECT, str(config_path)],
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stderr
+
+        sweep_id = output.split(" ")[-1].strip()
+
+        for line in output.splitlines():
+            logger.info(line)
+
+    return sweep_id

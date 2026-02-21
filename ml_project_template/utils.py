@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+import subprocess
 from pathlib import Path
 from typing import Final
 
@@ -17,6 +18,7 @@ class ConfigKeys:
     WANDB: Final[str] = "wandb"
     JOB: Final[str] = "job"
     STORE: Final[str] = "store"
+    COMMIT: Final[str] = "commit"
 
 
 def basic_seed_fn(seed: int) -> None:
@@ -41,3 +43,8 @@ def get_output_dir() -> Path:
         output_dir = Path("/tmp/outputs")
         output_dir.mkdir(exist_ok=True, parents=True)
     return output_dir
+
+
+def git_commit_hash() -> str:
+    """Get the current git commit short hash."""
+    return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode("ascii").strip()
