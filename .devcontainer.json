@@ -8,8 +8,7 @@
             "extensions": [
                 "ms-python.debugpy",
                 "ms-python.python",
-                "ms-python.vscode-pylance",
-                "ms-python.mypy-type-checker",
+                "astral-sh.ty",
                 "charliermarsh.ruff",
                 "tamasfe.even-better-toml",
                 "ms-azuretools.vscode-docker",
