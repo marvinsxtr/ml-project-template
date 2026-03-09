@@ -16,6 +16,11 @@ RUN COMMANDS="sacct sacctmgr salloc sattach sbatch sbcast scancel scontrol sdiag
     && echo 'ssh $USER@$SLURM_CLUSTER_NAME -t "cd $PWD; . ~/.zshrc 2>/dev/null || . ~/.bashrc 2>/dev/null; bash -lc '\'$CMD \$@\''"' >> "/usr/local/bin/$CMD" \
     && chmod +x "/usr/local/bin/$CMD"; done
 
+# Install Claude Code
+RUN curl -fsSL https://nodejs.org/dist/v18.20.8/node-v18.20.8-linux-x64.tar.xz \
+    | tar -xJ -C /usr/local --strip-components=1
+RUN npm install -g @anthropic-ai/claude-code
+
 FROM linux-base AS python-base
 
 # Workdir
