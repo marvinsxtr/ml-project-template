@@ -1,11 +1,15 @@
-FROM --platform=linux/amd64 python:3.12-slim AS linux-base
+FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04 AS linux-base
+
+ARG TARGETARCH
 
 # Utilities
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends build-essential \
-    sudo curl git htop less rsync screen vim nano wget ca-certificates openssh-client zsh procps psmisc
+    sudo curl git htop less rsync screen vim nano wget ca-certificates openssh-client zsh procps psmisc \
+    iptables ipset iproute2 dnsutils aggregate jq
 
 # Download and install VS Code Server CLI
-RUN wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/latest/cli-linux-x64/stable" && \
+RUN ARCH="$TARGETARCH" && [ "$ARCH" = "amd64" ] && ARCH="x64"; \
+    wget -O /tmp/vscode-server-cli.tar.gz "https://update.code.visualstudio.com/latest/cli-linux-${ARCH}/stable" && \
     mkdir -p /usr/local/bin && \
     tar -xf /tmp/vscode-server-cli.tar.gz -C /usr/local/bin && \
     rm /tmp/vscode-server-cli.tar.gz
@@ -17,7 +21,8 @@ RUN COMMANDS="sacct sacctmgr salloc sattach sbatch sbcast scancel scontrol sdiag
     && chmod +x "/usr/local/bin/$CMD"; done
 
 # Install Claude Code
-RUN curl -fsSL https://nodejs.org/dist/v18.20.8/node-v18.20.8-linux-x64.tar.xz \
+RUN ARCH="$TARGETARCH" && [ "$ARCH" = "amd64" ] && ARCH="x64"; \
+    curl -fsSL https://nodejs.org/dist/v18.20.8/node-v18.20.8-linux-${ARCH}.tar.xz \
     | tar -xJ -C /usr/local --strip-components=1
 RUN npm install -g @anthropic-ai/claude-code
 
@@ -43,3 +48,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --all-groups
+
+# Non-root user
+RUN useradd -m -s /bin/bash devuser \
+    && echo 'alias claude="claude --dangerously-skip-permissions"' >> /home/devuser/.bashrc
+
+# Firewall init script
+COPY .devcontainer/init-firewall.sh /usr/local/bin/init-firewall.sh
+RUN chmod +x /usr/local/bin/init-firewall.sh \
+    && echo "devuser ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/devuser-firewall \
+    && chmod 0440 /etc/sudoers.d/devuser-firewall
+
+USER devuser
