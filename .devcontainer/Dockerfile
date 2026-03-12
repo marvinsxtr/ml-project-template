@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04 AS linux-base
+FROM python:3.12-slim AS linux-base
 
 ARG TARGETARCH
 
