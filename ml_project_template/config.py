@@ -51,6 +51,7 @@ def pre_call(
     if verbose:
         logger.info(f"Saving outputs in {output_path}")
 
+    (output_path / ".hydra").mkdir(parents=True, exist_ok=True)
     save_as_yaml(root_config, output_path / ".hydra/zen_config.yaml")
 
     if (wandb_config := config.get(ConfigKeys.WANDB)) is not None:
