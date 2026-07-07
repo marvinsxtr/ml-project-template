@@ -1,3 +1,4 @@
+import os
 import sys
 from dataclasses import dataclass, field, fields
 from pathlib import Path
@@ -62,11 +63,15 @@ class Job:
     @property
     def python_command(self) -> str:
         """Python command used by the job."""
-        return f"apptainer run --nv {self.image} python"
+        repo = os.environ.get("JOB_REPO")
+        bind = f" -B {repo}:/srv/repo --pwd /srv/repo" if repo else ""
+        passthrough = ("HYDRA_OUTPUT_DIR", "WANDB_API_KEY", "WANDB_ENTITY", "WANDB_PROJECT")
+        env = "".join(f" --env {var}={os.environ[var]}" for var in passthrough if var in os.environ)
+        return f"apptainer run{bind}{env} --nv {self.image} python"
 
     def run(self) -> None:
         """Run the job on the cluster."""
-        hydra_run_dir = "./outputs/runs/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}"
+        hydra_run_dir = os.environ.get("HYDRA_OUTPUT_DIR", "./outputs/runs/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}")
 
         command = [
             "python",

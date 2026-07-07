@@ -28,7 +28,9 @@ SlurmParamsConfig = builds(
     tasks_per_node=1,
 )
 
-JobConfig = builds(Job, image="oras://ghcr.io/marvinsxtr/causal-fm:latest-sif", slurm_params=SlurmParamsConfig)
+_IMAGE = "${oc.env:JOB_IMAGE,oras://ghcr.io/marvinsxtr/ml-project-template:latest-sif}"
+
+JobConfig = builds(Job, image=_IMAGE, slurm_params=SlurmParamsConfig)
 
 SweepConfig = builds(SweepJob, num_workers=2, parameters={"foo": [42, 1337]}, builds_bases=(JobConfig,))
 

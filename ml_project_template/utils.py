@@ -32,11 +32,15 @@ def basic_seed_fn(seed: int) -> None:
 
 
 def get_output_dir() -> Path:
-    """Get the current output directory.
+    """Get the current output directory, honoring a HYDRA_OUTPUT_DIR override.
 
     Returns:
     Output path of the current run.
     """
+    if override := os.environ.get("HYDRA_OUTPUT_DIR"):
+        path = Path(override)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
     try:
         output_dir = Path(HydraConfig.get().runtime.output_dir)
     except ValueError:
