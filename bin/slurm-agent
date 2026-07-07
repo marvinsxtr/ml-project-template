@@ -23,7 +23,7 @@
 #   SLURM_BIN  dir to prepend to PATH when slurm isn't on the login PATH
 #   CPUS MEM TIME   submitter allocation size. Defaults: 2  4G  00:15:00
 #   HOST       run remotely: ssh into $HOST and trigger the launcher there (login shell). REMOTE_REPO
-#              overrides the remote checkout (default ~/Projects/<origin repo name>); GIT_REMOTE the remote.
+#              overrides the remote checkout (default: the local repo's path under $HOME); GIT_REMOTE the remote.
 set -euo pipefail
 
 : "${IMAGE:?set IMAGE to an apptainer image ref (oras://... or a .sif path)}"
@@ -39,7 +39,7 @@ git -C "$REPO" branch -r --contains "$SHA" | grep -q . \
   || { echo "slurm-agent: commit ${SHA:0:8} is not on ${GIT_REMOTE:-origin} — 'git push' it first." >&2; exit 1; }
 
 if [ -n "${HOST:-}" ] && [ "$HOST" != "$(hostname -s)" ] && [ "$HOST" != "$(hostname)" ]; then
-  rrepo="${REMOTE_REPO:-Projects/$(basename "$(git -C "$REPO" remote get-url "${GIT_REMOTE:-origin}")" .git)}"
+  rrepo="${REMOTE_REPO:-${REPO#"$HOME"/}}"
   fwd="REPO=~/$rrepo REF=$SHA IMAGE=$IMAGE"
   for v in JOB HYDRA_OUTPUT_DIR CPU_PART CPUS MEM TIME SLURM_BIN; do [ -n "${!v:-}" ] && fwd="$fwd $v=${!v}"; done
   exec ssh -t "$HOST" "bash -lc 'cd ~/$rrepo && git fetch -q ${GIT_REMOTE:-origin} && $fwd slurm-agent $*'"

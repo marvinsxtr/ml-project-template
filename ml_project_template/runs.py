@@ -63,9 +63,6 @@ class Job:
     @property
     def python_command(self) -> str:
         """Python command used by the job."""
-        # slurm-agent sets JOB_REPO to a checked-out worktree; bind it onto the image's /srv/repo so
-        # the node runs that code (the image ships deps only). Pass the run dir + wandb creds as env
-        # vars since a worktree has no .env and the ssh-forwarded sbatch drops the submitter's env.
         repo = os.environ.get("JOB_REPO")
         bind = f" -B {repo}:/srv/repo --pwd /srv/repo" if repo else ""
         passthrough = ("HYDRA_OUTPUT_DIR", "WANDB_API_KEY", "WANDB_ENTITY", "WANDB_PROJECT")

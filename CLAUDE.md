@@ -33,6 +33,19 @@ python example/main.py cfg/job=base         # submit Slurm job
 python example/main.py cfg/job=sweep        # parameter sweep
 ```
 
+## Submitting cluster jobs with `bin/slurm-agent`
+
+For an agent (e.g. Claude Code), `bin/slurm-agent` submits a Slurm job in one command — no interactive container/devcontainer, and it works from a login node that has neither python nor apptainer. It checks the target commit out into a per-commit worktree, runs the hydra-zen submitter in the image on a short CPU allocation, and submitit sbatches the job.
+
+```bash
+IMAGE=oras://ghcr.io/<you>/<project>:latest-sif JOB=<cfg/job option> bin/slurm-agent example/main.py [overrides…]
+```
+
+- **Commit and push first.** It runs a committed, pushed SHA from `$REPO/.worktrees/<sha>`, so uncommitted edits do NOT run — it refuses a dirty tree unless you pass `REF=<branch|sha>`. Concurrent jobs on different commits therefore never clobber each other's code.
+- **From a laptop**, add `HOST=<cluster>`: it ssh's in (login shell), fetches the commit, and submits there. `SLURM_BIN=<dir>` if slurm isn't on the login PATH; `REMOTE_REPO=<path>` if the checkout isn't at the same path as locally.
+- **Outputs & wandb**: it sets `HYDRA_OUTPUT_DIR` so `get_output_dir()` (submitit logs, checkpoints, wandb) points at one per-run dir, and passes wandb creds as env vars (a worktree has no `.env`; keep the API key in `~/.netrc` or a `.env` in the main checkout).
+- The launcher sets `JOB_REPO`/`JOB_IMAGE`, read by `Job.python_command` — nothing else in the project needs changing. See the script header for all knobs.
+
 ## Architecture
 
 **Library** (`ml_project_template/`) + **Example** (`example/`):
