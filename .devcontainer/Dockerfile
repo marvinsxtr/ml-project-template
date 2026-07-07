@@ -30,12 +30,6 @@ RUN npm install -g @anthropic-ai/claude-code
 RUN useradd -m -s /bin/bash devuser \
     && echo 'alias claude="claude --dangerously-skip-permissions"' >> /home/devuser/.bashrc
 
-# Firewall init script
-COPY .devcontainer/init-firewall.sh /usr/local/bin/init-firewall.sh
-RUN chmod +x /usr/local/bin/init-firewall.sh \
-    && echo "devuser ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/devuser-firewall \
-    && chmod 0440 /etc/sudoers.d/devuser-firewall
-
 FROM linux-base AS python-base
 
 WORKDIR /srv/repo

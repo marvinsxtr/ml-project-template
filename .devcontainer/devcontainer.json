@@ -3,11 +3,6 @@
         "dockerfile": "Dockerfile",
         "context": ".."
     },
-    "runArgs": [
-        "--cap-add=NET_ADMIN",
-        "--cap-add=NET_RAW"
-    ],
-    "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
     "workspaceFolder": "/srv/repo",
     "workspaceMount": "source=${localWorkspaceFolder},target=/srv/repo,type=bind",
     "customizations": {
