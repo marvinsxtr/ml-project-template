@@ -8,15 +8,15 @@
 # concurrent jobs on different commits never clobber each other and wandb's commit matches what ran.
 #
 # Usage:   slurm-agent <script.py> [hydra overrides ...]
-#   e.g.   IMAGE=oras://ghcr.io/you/project:latest-sif slurm-agent example/main.py
-#          REF=my-branch JOB=gpu IMAGE=... slurm-agent src/train.py cfg=big
-#          HOST=cluster JOB=gpu IMAGE=... slurm-agent src/train.py        # trigger over ssh
+#          Pass cfg/job=<option> as an override to submit to Slurm; omit it to run in the CPU alloc.
+#   e.g.   IMAGE=oras://ghcr.io/you/project:latest-sif slurm-agent example/main.py cfg/job=base
+#          REF=my-branch IMAGE=... slurm-agent src/train.py cfg=big cfg/job=gpu
+#          HOST=cluster IMAGE=... slurm-agent src/train.py cfg/job=gpu       # trigger over ssh
 #
 # Env:
 #   IMAGE      (required) apptainer image ref: oras://... (instant from cache once pulled) or a .sif
 #   REF        branch/tag/commit to run, resolved to a SHA. Default: HEAD (refused if the tree is dirty)
 #   REPO       git checkout to launch from. Default: $PWD
-#   JOB        cfg/job store option (e.g. gpu, gpu_test). Default: none (runs in the CPU alloc)
 #   HYDRA_OUTPUT_DIR  where get_output_dir() points (submitit logs, checkpoints, wandb). Used verbatim
 #                     when set; else an auto per-run dir $REPO/outputs/<timestamp>-<sha>
 #   CPU_PART   partition for the submitter allocation. Default: cpu-2h
@@ -41,7 +41,7 @@ git -C "$REPO" branch -r --contains "$SHA" | grep -q . \
 if [ -n "${HOST:-}" ] && [ "$HOST" != "$(hostname -s)" ] && [ "$HOST" != "$(hostname)" ]; then
   rrepo="${REMOTE_REPO:-${REPO#"$HOME"/}}"
   fwd="REPO=~/$rrepo REF=$SHA IMAGE=$IMAGE"
-  for v in JOB HYDRA_OUTPUT_DIR CPU_PART CPUS MEM TIME SLURM_BIN; do [ -n "${!v:-}" ] && fwd="$fwd $v=${!v}"; done
+  for v in HYDRA_OUTPUT_DIR CPU_PART CPUS MEM TIME SLURM_BIN; do [ -n "${!v:-}" ] && fwd="$fwd $v=${!v}"; done
   exec ssh -t "$HOST" "bash -lc 'cd ~/$rrepo && git fetch -q ${GIT_REMOTE:-origin} && $fwd slurm-agent $*'"
 fi
 
@@ -66,9 +66,6 @@ for v in WANDB_API_KEY WANDB_ENTITY WANDB_PROJECT; do [ -n "${!v:-}" ] && export
 
 echo "slurm-agent: REPO=$REPO sha=${SHA:0:8} out=$OUTDIR IMAGE=$IMAGE" >&2
 
-extra=()
-[ -n "${JOB:-}" ] && extra=("cfg/job=$JOB")
-
 exec srun -p "$CPU_PART" -c "${CPUS:-2}" --mem="${MEM:-4G}" -t "${TIME:-00:15:00}" -J slurm_submit \
   apptainer run -B "$WT":/srv/repo --pwd /srv/repo "$IMAGE" \
-  python "$@" "${extra[@]}"
+  python "$@"

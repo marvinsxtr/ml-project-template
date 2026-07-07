@@ -38,7 +38,7 @@ python example/main.py cfg/job=sweep        # parameter sweep
 For an agent (e.g. Claude Code), `bin/slurm-agent` submits a Slurm job in one command — no interactive container/devcontainer, and it works from a login node that has neither python nor apptainer. It checks the target commit out into a per-commit worktree, runs the hydra-zen submitter in the image on a short CPU allocation, and submitit sbatches the job.
 
 ```bash
-IMAGE=oras://ghcr.io/<you>/<project>:latest-sif JOB=<cfg/job option> bin/slurm-agent example/main.py [overrides…]
+IMAGE=oras://ghcr.io/<you>/<project>:latest-sif bin/slurm-agent example/main.py cfg/job=<option> [overrides…]
 ```
 
 - **Commit and push first.** It runs a committed, pushed SHA from `$REPO/.worktrees/<sha>`, so uncommitted edits do NOT run — it refuses a dirty tree unless you pass `REF=<branch|sha>`. Concurrent jobs on different commits therefore never clobber each other's code.
