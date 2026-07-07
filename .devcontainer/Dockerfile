@@ -5,7 +5,7 @@ ARG TARGETARCH
 # Utilities
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends build-essential \
     sudo curl git htop less rsync screen vim nano wget ca-certificates openssh-client zsh procps psmisc \
-    iptables ipset iproute2 dnsutils aggregate jq gfortran pkg-config
+    jq gfortran pkg-config
 
 # Download and install VS Code Server CLI
 RUN ARCH="$TARGETARCH" && [ "$ARCH" = "amd64" ] && ARCH="x64"; \
@@ -27,8 +27,7 @@ RUN ARCH="$TARGETARCH" && [ "$ARCH" = "amd64" ] && ARCH="x64"; \
 RUN npm install -g @anthropic-ai/claude-code
 
 # Non-root user
-RUN useradd -m -s /bin/bash devuser \
-    && echo 'alias claude="claude --dangerously-skip-permissions"' >> /home/devuser/.bashrc
+RUN useradd -m -s /bin/bash devuser
 
 FROM linux-base AS python-base
 
