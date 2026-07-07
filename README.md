@@ -288,6 +288,20 @@ python example/main.py cfg/job=sweep
 
 This will automatically enable WandB logging. See `example/configs.py` to configure sweep parameters.
 
+### Submitting from a bare login node (`bin/slurm-agent`)
+
+`python example/main.py cfg/job=base` submits from *inside* the container (a devcontainer or tunnel session). If your login node has no python or apptainer, `bin/slurm-agent` does it all in one command: it checks the target commit out into a per-commit git worktree, runs the hydra-zen submitter in the image on a short CPU allocation, and submitit sbatches the job from there.
+
+```bash
+IMAGE=oras://ghcr.io/<you>/<project>:latest-sif JOB=base bin/slurm-agent example/main.py
+```
+
+- Runs a **committed, pushed** SHA (from `$REPO/.worktrees/<sha>`), so concurrent jobs on different branches never clobber each other's code; it refuses a dirty tree unless you pass `REF=<branch|sha>`.
+- Sets `HYDRA_OUTPUT_DIR` so `get_output_dir()` (submitit logs, checkpoints, wandb) points at one per-run dir, and lifts wandb creds from `.env`/your shell into env vars (worktrees have no `.env`).
+- Add `HOST=<cluster>` to trigger it over ssh from a laptop, and `SLURM_BIN=<dir>` if slurm isn't on the login PATH. See the script header for all knobs.
+
+The launcher sets `JOB_REPO`/`JOB_IMAGE`, which `Job.python_command` reads to bind the worktree at `/srv/repo` and pick the image — nothing else in the project needs to change.
+
 ## 👥 Contributions
 
 Contributions to this documentation and template are very welcome! Feel free to open a PR or reach out with suggestions.

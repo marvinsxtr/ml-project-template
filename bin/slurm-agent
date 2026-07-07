@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# slurm-agent — fire off an ml-project-template hydra-zen job on a Slurm cluster whose login node has
+# neither python nor apptainer. The submitit/apptainer analog of gpu-agent.
+#
+# Checks the target commit out into a per-commit git worktree, binds it at /srv/repo, and runs the
+# hydra-zen submitter in the image on a short CPU allocation; the image's ssh-wrapped slurm commands
+# reach the controller and sbatch the job. Always runs a committed, pushed SHA (not the live tree), so
+# concurrent jobs on different commits never clobber each other and wandb's commit matches what ran.
+#
+# Usage:   slurm-agent <script.py> [hydra overrides ...]
+#   e.g.   IMAGE=oras://ghcr.io/you/project:latest-sif slurm-agent example/main.py
+#          REF=my-branch JOB=gpu IMAGE=... slurm-agent src/train.py cfg=big
+#          HOST=cluster JOB=gpu IMAGE=... slurm-agent src/train.py        # trigger over ssh
+#
+# Env:
+#   IMAGE      (required) apptainer image ref: oras://... (instant from cache once pulled) or a .sif
+#   REF        branch/tag/commit to run, resolved to a SHA. Default: HEAD (refused if the tree is dirty)
+#   REPO       git checkout to launch from. Default: $PWD
+#   JOB        cfg/job store option (e.g. gpu, gpu_test). Default: none (runs in the CPU alloc)
+#   HYDRA_OUTPUT_DIR  where get_output_dir() points (submitit logs, checkpoints, wandb). Used verbatim
+#                     when set; else an auto per-run dir $REPO/outputs/<timestamp>-<sha>
+#   CPU_PART   partition for the submitter allocation. Default: cpu-2h
+#   SLURM_BIN  dir to prepend to PATH when slurm isn't on the login PATH
+#   CPUS MEM TIME   submitter allocation size. Defaults: 2  4G  00:15:00
+#   HOST       run remotely: ssh into $HOST and trigger the launcher there (login shell). REMOTE_REPO
+#              overrides the remote checkout (default ~/Projects/<origin repo name>); GIT_REMOTE the remote.
+set -euo pipefail
+
+: "${IMAGE:?set IMAGE to an apptainer image ref (oras://... or a .sif path)}"
+REPO="${REPO:-$PWD}"
+CPU_PART="${CPU_PART:-cpu-2h}"
+
+SHA="$(git -C "$REPO" rev-parse --verify "${REF:-HEAD}^{commit}")"
+if [ -z "${REF:-}" ] && [ -n "$(git -C "$REPO" status --porcelain)" ]; then
+  echo "slurm-agent: $REPO has uncommitted changes — commit them, or pass REF=<branch|sha>." >&2
+  exit 1
+fi
+git -C "$REPO" branch -r --contains "$SHA" | grep -q . \
+  || { echo "slurm-agent: commit ${SHA:0:8} is not on ${GIT_REMOTE:-origin} — 'git push' it first." >&2; exit 1; }
+
+if [ -n "${HOST:-}" ] && [ "$HOST" != "$(hostname -s)" ] && [ "$HOST" != "$(hostname)" ]; then
+  rrepo="${REMOTE_REPO:-Projects/$(basename "$(git -C "$REPO" remote get-url "${GIT_REMOTE:-origin}")" .git)}"
+  fwd="REPO=~/$rrepo REF=$SHA IMAGE=$IMAGE"
+  for v in JOB HYDRA_OUTPUT_DIR CPU_PART CPUS MEM TIME SLURM_BIN; do [ -n "${!v:-}" ] && fwd="$fwd $v=${!v}"; done
+  exec ssh -t "$HOST" "bash -lc 'cd ~/$rrepo && git fetch -q ${GIT_REMOTE:-origin} && $fwd slurm-agent $*'"
+fi
+
+[ -n "${SLURM_BIN:-}" ] && export PATH="$SLURM_BIN:$PATH"
+
+WT="$REPO/.worktrees/$SHA"
+[ -d "$WT" ] || git -C "$REPO" worktree add --quiet --detach "$WT" "$SHA"
+
+OUTDIR="${HYDRA_OUTPUT_DIR:-$REPO/outputs/$(date +%Y%m%d-%H%M%S)-${SHA:0:8}}"
+mkdir -p "$OUTDIR"
+
+# JOB_*/HYDRA_OUTPUT_DIR are read inside the container by the Job config, which bakes them into the
+# submitted job command so the compute node binds the same worktree and writes to the same dir.
+export APPTAINERENV_HYDRA_OUTPUT_DIR="$OUTDIR"
+export APPTAINERENV_JOB_REPO="$WT"
+export APPTAINERENV_JOB_IMAGE="$IMAGE"
+
+# wandb creds as env vars (worktrees have no .env): lift $REPO/.env if present, then forward whatever
+# is set so it reaches the compute node. WANDB_API_KEY can instead live in ~/.netrc and be omitted.
+[ -f "$REPO/.env" ] && { set -a; . "$REPO/.env"; set +a; }
+for v in WANDB_API_KEY WANDB_ENTITY WANDB_PROJECT; do [ -n "${!v:-}" ] && export "APPTAINERENV_$v=${!v}"; done
+
+echo "slurm-agent: REPO=$REPO sha=${SHA:0:8} out=$OUTDIR IMAGE=$IMAGE" >&2
+
+extra=()
+[ -n "${JOB:-}" ] && extra=("cfg/job=$JOB")
+
+exec srun -p "$CPU_PART" -c "${CPUS:-2}" --mem="${MEM:-4G}" -t "${TIME:-00:15:00}" -J slurm_submit \
+  apptainer run -B "$WT":/srv/repo --pwd /srv/repo "$IMAGE" \
+  python "$@" "${extra[@]}"
